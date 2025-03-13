@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>厨神杯随机英雄页面</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+<!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<!-- 可选的 Bootstrap 主题文件（一般不用引入） -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+<!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js" integrity="sha512-E8QSvWZ0eCLGk4km3hxSsNmGWbLtSCSUcewDQPQWZF6pEU8GlT8a5fF32wOl1i8ftdMhssTrF/OhyGWwonTcXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script type="text/javascript" language="javascript">
+    var heroLists = null;
+    var heroNum = 15;
+    var str = null;
+    var remainHero = null;
+
+
+    var msg = "请输入畜生杯管理员密码:";
+    function verify(){
+        var password = prompt(msg);
+
+        var timecode = changeTime();
+        document.getElementById("CountDown").innerHTML = timecode;
+        console.log(timecode);
+
+        console.log("verify");
+        var encode_password = window.btoa(password);
+        if(encode_password != ADMIN_PASSWORD){
+            msg = "密码错误，请重新输入畜生杯管理员密码:";
+            verify();
+        }
+    }
+
+    //获取LOL官网英雄列表
+    $(function () {
+      $.getJSON('https://game.gtimg.cn/images/lol/act/img/js/heroList/hero_list.js',function (res) {
+        heroLists = res.hero;
+        console.log(heroLists.length);
+        console.log(heroLists);
+        str = getArrayItems(heroLists,heroNum);
+        //console.log(str);
+
+      })
+    })
+
+
+
+    //从指定数组抽取英雄不重复项
+    function getArrayItems(arr, num) {
+        //新建一个数组,将传入的数组复制过来,用于运算,而不要直接操作传入的数组;
+        var temp_array = new Array();
+        for (var index in arr) {
+            temp_array.push(arr[index]);
+        }
+        //取出的数值项,保存在此数组
+        var return_array = new Array();
+        for (var i = 0; i<num; i++) {
+            //判断如果数组还有可以取出的元素,以防下标越界
+            if (temp_array.length>0) {
+                //在数组中产生一个随机索引
+                var arrIndex = Math.floor(Math.random()*temp_array.length);
+                //将此随机索引的对应的数组元素值复制出来
+                return_array[i] = temp_array[arrIndex];
+                //然后删掉此索引的数组元素,这时候temp_array变为新的数组
+                temp_array.splice(arrIndex, 1);
+            } else {
+                //数组中数据项取完后,退出循环,比如数组本来只有10项,但要求取出20项.
+                break;
+            }
+        }
+        remainHero = temp_array;
+        console.log(remainHero);
+
+        return return_array;
+    }
+
+    function filLength(num){
+        var index = "";
+        if(parseInt(num,10) < 10){
+            index = "0" + num;
+        } else {
+            index = num;
+        }
+
+        return index;
+    }
+
+    function convRole(roles){
+        var role = roles;
+
+        var newRole = [];
+        for(var j=0;j<roles.length;j++){
+            if("fighter" == roles[j]){
+                newRole.push("战士");
+            } else if("mage" == roles[j]){
+                newRole.push("法师");
+            } else if("assassin" == roles[j]){
+                newRole.push("刺客");
+            } else if("tank" == roles[j]){
+                newRole.push("坦克");
+            } else if("marksman" == roles[j]){
+                newRole.push("射手");
+            } else if("support" == roles[j]){
+                newRole.push("辅助");
+            }
+        }
+
+        return newRole.join("/");
+    }
+
+    function changeTime()
+    {
+        var myDate = new Date();
+        var NowTime = myDate.getFullYear();    //获取完整的年份(4位,1970-????)
+        NowTime = NowTime + "/" + (myDate.getMonth()+1);       //获取当前月份(0-11,0代表1月)
+        NowTime = NowTime + "/" + filLength(myDate.getDate());        //获取当前日(1-31)
+        NowTime = NowTime + " " + filLength(myDate.getHours());		//获取当前时间
+        NowTime = NowTime + ":" + filLength(myDate.getMinutes());		//获取当前时间
+        NowTime = NowTime + ":" + filLength(myDate.getSeconds()) ;		//获取当前时间
+
+
+        return NowTime;
+    }
+
+
+    /**
+     * 获取英雄图像URL
+     */
+    function getHeroImgDiv(alias){
+        let PREFIX_URL= "https://game.gtimg.cn/images/lol/act/img/champion/";
+        let IMG_TYPE = ".png";
+
+        return PREFIX_URL+alias+IMG_TYPE;
+
+        console.log(PREFIX_URL+alias+IMG_TYPE);
+    }
+
+    //随机两组不重复英雄的阵容
+    function selectHero(){
+        //console.log("------------------------------------------------------");
+        
+
+        document.getElementById("nameA").style.display = "none"
+        document.getElementById("nameB").style.display = "none";
+
+        var input1 = document.getElementById("inputNameA").value;
+        var input2 = document.getElementById("inputNameB").value;
+
+        if((null == input1 || "" == input1) || (null == input2 || "" == input2)){
+            document.getElementById("error1").innerHTML = "请重新输入队伍名称后点击按钮";
+
+        } else {
+            document.getElementById("error1").innerHTML = "";
+
+            document.getElementById("team1").innerHTML = document.getElementById("inputNameA").value+"队伍";
+            document.getElementById("team2").innerHTML = document.getElementById("inputNameB").value+"队伍";
+
+            var teamA = getArrayItems(heroLists,heroNum);//队伍A随机英雄阵容
+            var teamB = getArrayItems(remainHero,heroNum);//队伍B随机英雄阵容
+            console.log(teamA);
+            console.log(teamB);
+
+            var trHero = "";
+            var heroImg = ""
+            if(teamA.length == teamB.length){
+                for(var i=0;i<teamA.length;i++){
+                    trHero += "<tr class=\"info\">"+
+                        "<td><b>"+filLength(i+1)+"</b></td>"+
+                        "<td class=\"hero\">"+"<div class=\"heroPic\"><img src=\""+getHeroImgDiv(teamA[i].alias)+"\" class=\"img-responsive\" alt=\"40x40\">"+"</div>"+"</td>"+
+                        "<td><b>"+teamA[i].name+"</b></td>"+
+                        "<td><b>"+teamA[i].title+"</b></td>"+
+                        "<td><b>"+convRole(teamA[i].roles)+"</b></td>"+                                               
+                        "<td class=\"hero\">"+"<div class=\"heroPic\"><img src=\""+getHeroImgDiv(teamB[i].alias)+"\" class=\"img-responsive\" alt=\"40x40\">"+"</div>"+"</td>"+
+                        "<td><b>"+teamB[i].name+"</b></td>"+
+                        "<td><b>"+teamB[i].title+"</b></td>"+
+                        "<td><b>"+convRole(teamB[i].roles)+"</b></td></tr>";
+                }
+                document.getElementById("herobody").innerHTML = trHero;
+            }
+            
+            //console.log(trHero);
+        }
+    }
+
+    var ADMIN_PASSWORD = "anVodWFzaHU=";
+</script>
+<style type="text/css">
+html {
+    font-family: sans-serif;
+    -ms-text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+}
+ 
+body {
+    margin: 10px;
+}
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    white-space:nowrap;
+    overflow:hidden;
+    word-break:keep-all;
+}
+ 
+td {
+    white-space:nowrap;
+    overflow:hidden;
+    word-break:keep-all;
+    padding: 0;
+    font-size:15px;/*字体大小*/
+}
+th {
+    padding: 0;
+    font-size:15px;/*字体大小*/
+}
+ 
+.pure-table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    empty-cells: show;
+    border: 1px solid #cbcbcb;
+}
+ 
+.pure-table caption {
+    color: #000;
+    font: italic 85%/1 arial,sans-serif;
+    padding: 1em 0;
+    text-align: center;
+}
+ 
+.pure-table td,.pure-table th {
+    border-left: 1px solid #cbcbcb;
+    border-width: 0 0 0 1px;
+    font-size: inherit;
+    margin: 0;
+    overflow: visible;
+    padding: .5em 1em;
+}
+ 
+.pure-table thead {
+    background-color: #e0e0e0;
+    color: #000;
+    text-align: left;
+    vertical-align: bottom;
+}
+ 
+.pure-table td {
+    background-color: transparent;
+}
+ 
+.pure-table-odd td {
+    background-color: #f2f2f2;
+}
+.title {
+    width: 85%;
+    height: 50px;
+    line-height: 50px;
+    margin: 0 auto;
+    margin-top: 20px;
+    border-bottom: 1px #9FCBB0 solid;
+    padding-left: 36px;
+    font-size: 3.6rem;
+}
+.table1 {
+    /* width: 54%; */
+    margin: 0 auto;
+    margin-top: 3.5%;
+    font-size: 3.4rem;
+    line-height: 50px;
+}
+.time{
+	float:right;/*定位方式，一般不修改*/
+	position:absolute;/*定位方式，一般不修改*/
+	font-family:Arial;/*字体*/
+	/*字体颜色*/
+	font-size:25px;/*字体大小*/
+	left: 85%;/*距离页面左边框的边距*/
+	top: 2%;/*距离页面上边框的边距*/
+	color:#474735;
+}
+.copyright{
+	float:center;/*定位方式，一般不修改*/
+	font-family:Arial;/*字体*/
+	/*字体颜色*/
+	font-size:14px;/*字体大小*/
+    left: 50%;/*距离页面左边框的边距*/
+	top: 10%;/*距离页面上边框的边距*/
+	color:#474735;
+}
+.scrollText{
+    position:absolute;/*定位方式，一般不修改*/
+	font-family:Arial;/*字体*/
+	/*字体颜色*/
+	font-size:20px;/*字体大小*/
+	left: 5%;/*距离页面左边框的边距*/
+	top: 2%;/*距离页面上边框的边距*/
+	color:red;
+}
+.hero {
+    text-align: left;
+    cursor: pointer;
+}
+.heroPic{
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-left:0.4rem;
+    text-align: center;
+    overflow: hidden;
+    line-height: .6rem;
+    flex-shrink: 0;
+}
+.heroName{
+    display: inline-block;
+    vertical-align: middle;
+    text-align: center;
+    margin-left: 19rem;
+}
+
+</style>
+</head>
+<body>
+    <div>
+        <h2 class="text-center"><b>厨神杯大乱斗随机英雄</b></h2>
+    </div> 
+    <div id="CountDown" class="time"></div>
+    <table class="table table-hover table-bordered">
+        <thead>
+            <tr class="danger">
+                <th>#</th>
+                <th class="text-center" colspan ="4" id="team1" ></th>
+                <th class="text-center" colspan ="4" id="team2" ></th>
+            </tr>
+        </thead>
+        <tbody id="herobody">
+        </tbody>
+    </table>
+    <form class="form-inline">
+        <div class="form-group" id = "nameA">
+            <label for="exampleInputName2">队伍A</label>
+            <input type="text" class="form-control" id="inputNameA" placeholder="不准狗叫冠军队">
+        </div>
+        <div class="form-group" id = "nameB">
+            <label for="exampleInputName2">队伍B</label>
+            <input type="text" class="form-control" id="inputNameB" placeholder="皮卡国帅这个队">
+        </div>
+    </form>
+    <br/>
+    <div class="form-group has-error">
+        <button type="button" onclick="selectHero()" class="btn btn-primary btn-lg" >请输入队伍名字后点这里</button>
+        <label class="control-label" for="inputError1" id="error1"></label>
+    </div>
+   <div class="copyright">
+        <h5 class="text-center"><b>Copyright&nbsp;©&nbsp;厨神杯&nbsp;芒果树的菊花&nbsp;版权所有</b></h5>
+   </div>  
+</body>
+</html>
